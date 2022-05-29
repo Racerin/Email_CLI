@@ -1,0 +1,9 @@
+# System Specific
+venv
+
+# Personal
+.env
+
+# Noise
+*.pyc
+*__pycache__
