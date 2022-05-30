@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+import configparser
 from PARAM import *
 
 
@@ -20,6 +21,29 @@ class Email:
     email_subject : str = ""
     message = ""
 
+    def get_config(self):
+        """ Read config.ini file and get config values. """
+        config = configparser.ConfigParser()
+        config.read(CONFIG_FILE_NAME)
+        try:
+            dict1 = config['DEFAULT']
+            if dict1.get('PYTHON_EMAIL_APP_USERNAME'):
+                self.smtp_username = dict1.get('PYTHON_EMAIL_APP_USERNAME', self.smtp_username)
+            if dict1.get('PYTHON_EMAIL_APP_EMAIL_ADDRESS'):
+                self.email_from = dict1.get('PYTHON_EMAIL_APP_EMAIL_ADDRESS', self.email_from)
+            if dict1.get('PYTHON_EMAIL_APP_SERVER'):
+                self.smtp_server = dict1.get('PYTHON_EMAIL_APP_SERVER', self.smtp_server)
+            if dict1.get('PYTHON_EMAIL_APP_PORT'):
+                self.smtp_port = dict1.get('PYTHON_EMAIL_APP_PORT', self.smtp_port)
+            if dict1.get('PYTHON_EMAIL_APP_PASSWORD'):
+                self.smtp_password = dict1.get('PYTHON_EMAIL_APP_PASSWORD', self.smtp_password)
+            if dict1.get('PYTHON_EMAIL_APP_RECEIVING_EMAIL'):
+                self.email_to = dict1.get('PYTHON_EMAIL_APP_RECEIVING_EMAIL', self.email_to)
+            if dict1.get('PYTHON_EMAIL_APP_SUBJECT'):
+                self.email_subject = dict1.get('PYTHON_EMAIL_APP_SUBJECT', self.email_subject)
+        except AttributeError as e:
+            print("Error in accessing config file information.", e)
+
     def get_env_variables(self):
         """ 
         Read environment variables (dotenv, env variables,) 
@@ -28,14 +52,25 @@ class Email:
         # Load the dotenv file to environment variables
         load_dotenv()
         # Assign properties
-        self.smtp_username = os.getenv("PYTHON_EMAIL_APP_USERNAME")
-        self.smtp_password = os.getenv("PYTHON_EMAIL_APP_PASSWORD")
-        self.email_from = os.getenv("PYTHON_EMAIL_APP_EMAIL_ADDRESS")
-        milk = os.getenv("goatmilk")    # returns None?
+        if os.getenv("PYTHON_EMAIL_APP_USERNAME"):
+            self.smtp_username = os.getenv("PYTHON_EMAIL_APP_USERNAME")
+        if os.getenv("PYTHON_EMAIL_APP_PASSWORD"):
+            self.smtp_password = os.getenv("PYTHON_EMAIL_APP_PASSWORD")
+        if os.getenv("PYTHON_EMAIL_APP_EMAIL_ADDRESS"):
+            self.email_from = os.getenv("PYTHON_EMAIL_APP_EMAIL_ADDRESS")
+        if os.getenv("PYTHON_EMAIL_APP_RECEIVING_EMAIL"):
+            self.email_to = os.getenv("PYTHON_EMAIL_APP_RECEIVING_EMAIL")
+        if os.getenv("PYTHON_EMAIL_APP_PORT"):
+            self.smtp_port = os.getenv("PYTHON_EMAIL_APP_PORT")
+        if os.getenv("PYTHON_EMAIL_APP_SERVER"):
+            self.smtp_server = os.getenv("PYTHON_EMAIL_APP_SERVER")
+        if os.getenv("PYTHON_EMAIL_APP_SUBJECT"):
+            self.subject = os.getenv("PYTHON_EMAIL_APP_SUBJECT")
 
     def __post_init__(self):
         """ Things to do after the object has been instantiated. """
         # Obdate object with configuration variables
+        self.get_config()
         # Obdate object with environmental variables
         self.get_env_variables()
 
@@ -63,6 +98,7 @@ class Email:
         msg['From'] = self.email_from
         msg['To'] = self.email_to
         debug_level = True
+        print(self)
         mail = smtplib.SMTP(self.smtp_server, self.smtp_port)
         mail.set_debuglevel(debug_level)
         mail.starttls()
